@@ -1,7 +1,7 @@
 streamlit
 numpy
 librosa
-tensorflow-cpu==2.15.0
+tensorflow==2.12.0
 matplotlib
 lime
 scikit-image
