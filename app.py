@@ -139,41 +139,108 @@ def visualize_and_predict_pipeline(audio_input_buffer, model):
     Accepts a BytesIO buffer.
     Returns features, prediction_proba, and classification_result.
     """
+
     if model is None:
         st.warning("Model not loaded. Cannot perform prediction.")
         return None, None, None
 
-    # 1. Load Raw Audio
-    audio_input_buffer.seek(0)
-    raw_y, raw_sr = librosa.load(audio_input_buffer, sr=None)
-    
-    # 2. Preprocess Audio
-    audio_input_buffer.seek(0)
-    preprocessed_y = preprocess_audio(audio_input_buffer)
-    
-    if preprocessed_y is None:
+    try:
+        # 1. Load Raw Audio
+        audio_input_buffer.seek(0)
+        raw_y, raw_sr = librosa.load(audio_input_buffer, sr=None)
+
+        st.success("Raw audio loaded successfully!")
+
+        # 2. Preprocess Audio
+        audio_input_buffer.seek(0)
+        preprocessed_y = preprocess_audio(audio_input_buffer)
+
+        if preprocessed_y is None:
+            st.error("Preprocessing failed.")
+            return None, None, None
+
+        st.success("Audio preprocessing completed!")
+
+        # 3. Extract Features (Mel-Spectrogram)
+        features = extract_features(preprocessed_y)
+
+        if features is None:
+            st.error("Feature extraction failed.")
+            return None, None, None
+
+        st.success("Feature extraction completed!")
+
+        # ---------------------------------------------------
+        # FIX INPUT SHAPE
+        # ---------------------------------------------------
+
+        TARGET_WIDTH = 94
+
+        current_width = features.shape[1]
+
+        # Trim if larger
+        if current_width > TARGET_WIDTH:
+            features = features[:, :TARGET_WIDTH, :]
+
+        # Pad if smaller
+        elif current_width < TARGET_WIDTH:
+            pad_width = TARGET_WIDTH - current_width
+
+            padding = np.zeros(
+                (
+                    features.shape[0],
+                    pad_width,
+                    features.shape[2]
+                )
+            )
+
+            features = np.concatenate((features, padding), axis=1)
+
+        # Add batch dimension
+        features_for_prediction = np.expand_dims(features, axis=0)
+
+        # Convert datatype
+        features_for_prediction = features_for_prediction.astype(np.float32)
+
+        # Debugging info
+        st.write("Final Input Shape:", features_for_prediction.shape)
+
+        # ---------------------------------------------------
+        # PREDICTION
+        # ---------------------------------------------------
+
+        st.info("Running model prediction...")
+
+        prediction = model.predict(
+            features_for_prediction,
+            verbose=0
+        )
+
+        st.write("Raw Model Output:", prediction)
+
+        prediction_proba = float(prediction[0][0])
+
+        classification_result = (
+            "FAKE"
+            if prediction_proba > 0.5
+            else "REAL"
+        )
+
+        st.success("Prediction completed successfully!")
+
+        # Store for visualization
+        st.session_state['raw_y'] = raw_y
+        st.session_state['raw_sr'] = raw_sr
+        st.session_state['preprocessed_y'] = preprocessed_y
+        st.session_state['features'] = features
+        st.session_state['prediction_proba'] = prediction_proba
+        st.session_state['classification_result'] = classification_result
+
+        return features, prediction_proba, classification_result
+
+    except Exception as e:
+        st.error(f"Pipeline Error: {e}")
         return None, None, None
-
-    # 3. Extract Features (Mel-Spectrogram)
-    features = extract_features(preprocessed_y)
-    if features is None:
-        return None, None, None
-
-    features_for_prediction = np.expand_dims(features, axis=0)
-
-    # 4. Make Prediction
-    prediction_proba = model.predict(features_for_prediction)[0][0]
-    classification_result = "FAKE" if prediction_proba > 0.5 else "REAL"
-    
-    # Store these for potential display in the popup or main app
-    st.session_state['raw_y'] = raw_y
-    st.session_state['raw_sr'] = raw_sr
-    st.session_state['preprocessed_y'] = preprocessed_y
-    st.session_state['features'] = features
-    st.session_state['prediction_proba'] = prediction_proba
-    st.session_state['classification_result'] = classification_result
-
-    return features, prediction_proba, classification_result
 
 # --- Function to display details for a single audio in a popup ---
 def display_single_audio_details(file_name, raw_y, raw_sr, preprocessed_y, features, prediction_proba, classification_result, audio_buffer):
