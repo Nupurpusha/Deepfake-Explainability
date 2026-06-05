@@ -5,3 +5,6 @@ tensorflow
 matplotlib
 lime
 scikit-image
+pandas
+soundfile
+h5py
