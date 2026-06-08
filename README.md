@@ -57,7 +57,7 @@ Getting started is simple. Clone the repository, set up your environment, and ru
 
 ## 🌐 Live Application
 
-[![Try It Now](https://img.shields.io/badge/Try%20It%20Now-Live%20App-blue?style=for-the-badge)](https://deepfake-audio-detection-and-analysis.streamlit.app/)
+[![Try It Now](https://img.shields.io/badge/Try%20It%20Now-Live%20App-blue?style=for-the-badge)](https://deepfake-explainability.streamlit.app/)
 
 ---
 
