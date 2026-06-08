@@ -38,7 +38,7 @@ Getting started is simple. Clone the repository, set up your environment, and ru
 1.  **Clone & Install**:
 
     ```bash
-    git clone https://github.com/samiksha-bansal1/Deepfake-Audio-Detection-and-Analysis.git
+    git clone https://github.com/Nupurpusha/Deepfake-Explainability.git
     cd Deepfake-Audio-Detection-and-Analysis
     python3 -m venv venv
     source venv/bin/activate
